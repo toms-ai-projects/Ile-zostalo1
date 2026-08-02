@@ -1,0 +1,6 @@
+{
+  "name": "Ile zostało",
+  "description": "Uniwersalny licznik odliczający dni do ważnych wydarzeń.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
