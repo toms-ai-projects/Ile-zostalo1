@@ -41,8 +41,11 @@ private val LightColorScheme =
 @Composable
 fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  // Świadomie wyłączone: appka ma własną, zaprojektowaną ciepłą paletę kolorów
+  // (design "Ciepły" z Claude Design). Dynamic color (Material You) nadpisywałby
+  // ją kolorami wyciągniętymi z tapety telefonu użytkownika, co uniemożliwiało
+  // dotąd faktyczne wyświetlenie zaprojektowanych kolorów na Androidzie 12+.
+  dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
 ) {
   val colorScheme =
