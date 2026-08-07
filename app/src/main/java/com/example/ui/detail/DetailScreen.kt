@@ -27,6 +27,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.ui.theme.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
@@ -105,7 +106,7 @@ fun DetailScreen(
     val secondsLeft = TimeUnit.MILLISECONDS.toSeconds(absDiff) % 60
 
     val themeConfig = com.example.ui.theme.EventThemes.getTheme(event.theme)
-    val backgroundColor = if (themeConfig.name == "Classic") Color(event.colorArgb) else themeConfig.backgroundColor
+    val backgroundColor = themeConfig.backgroundColor
     
     val recurrenceLabel = when(event.recurrence) {
         "WEEKLY" -> "Co tydzień"
@@ -151,7 +152,7 @@ fun DetailScreen(
                     }) {
                         Icon(Icons.Filled.Share, contentDescription = "Udostępnij obraz")
                     }
-                    IconButton(onClick = { showExportDialog = true }) {
+                    IconButton(onClick = { showExportDialog = true }, modifier = Modifier.background(com.example.ui.theme.IconButtonBg, shape = androidx.compose.foundation.shape.CircleShape)) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Eksportuj wydarzenie")
                     }
                 },
@@ -178,10 +179,10 @@ fun DetailScreen(
                         drawLayer(graphicsLayer)
                     }
                     .then(
-                        if (themeConfig.hasDecorativeBorder && !hasImage) androidx.compose.ui.Modifier.border(2.dp, themeConfig.accentColor, RoundedCornerShape(32.dp)).padding(4.dp)
+                        if (themeConfig.hasDecorativeBorder && !hasImage) androidx.compose.ui.Modifier.border(2.dp, themeConfig.accentColor, RoundedCornerShape(36.dp)).padding(4.dp)
                         else androidx.compose.ui.Modifier
                     ),
-                shape = RoundedCornerShape(if (themeConfig.hasDecorativeBorder && !hasImage) 28.dp else 32.dp),
+                shape = RoundedCornerShape(36.dp),
                 colors = CardDefaults.cardColors(containerColor = backgroundColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
@@ -191,7 +192,7 @@ fun DetailScreen(
                             imageVector = Icons.Filled.DateRange,
                             contentDescription = null,
                             tint = themeConfig.accentColor.copy(alpha = 0.2f),
-                            modifier = Modifier.align(Alignment.TopEnd).padding(24.dp).size(48.dp)
+                            modifier = Modifier.align(Alignment.TopEnd).padding(26.dp).size(48.dp)
                         )
                     }
                     if (hasImage) {
@@ -210,7 +211,7 @@ fun DetailScreen(
                     }
                     Column(
                         modifier = Modifier
-                            .padding(24.dp)
+                            .padding(26.dp)
                             .fillMaxWidth()
                     ) {
                     Row(

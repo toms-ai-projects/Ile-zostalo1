@@ -1,3 +1,4 @@
+@file:OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 package com.example.ui.theme
 
 import androidx.compose.material3.Typography
@@ -15,6 +16,7 @@ import com.example.R
 // Wagi realizowane przez FontVariation.Settings (działa od API 26+; na starszych
 // wersjach Androida system użyje domyślnego wariantu wagi danego fontu — projekt
 // ma minSdk 24, więc to tylko kosmetyczna różnica na dwóch najstarszych wersjach).
+
 private fun variableFont(resId: Int, weight: FontWeight) = Font(
     resId = resId,
     weight = weight,

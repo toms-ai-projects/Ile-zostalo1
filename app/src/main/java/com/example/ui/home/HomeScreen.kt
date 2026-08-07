@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Download
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.ui.theme.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +30,9 @@ import com.example.data.ExportedEvent
 import com.example.data.Event
 import kotlinx.coroutines.launch
 import android.widget.Toast
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -64,6 +69,20 @@ fun HomeScreen(
         }
     }
 
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            val options = ScanOptions()
+            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+            options.setPrompt("Zeskanuj kod QR wydarzenia")
+            options.setBeepEnabled(false)
+            scanLauncher.launch(options)
+        } else {
+            Toast.makeText(context, "Uprawnienie do kamery jest wymagane", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             try {
@@ -97,7 +116,15 @@ fun HomeScreen(
             onDismiss = { showImportDialog = false },
             onScanQrClick = {
                 showImportDialog = false
-                scanLauncher.launch(ScanOptions())
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    val options = ScanOptions()
+                    options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                    options.setPrompt("Zeskanuj kod QR wydarzenia")
+                    options.setBeepEnabled(false)
+                    scanLauncher.launch(options)
+                } else {
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                }
             },
             onPickFileClick = {
                 showImportDialog = false
@@ -137,7 +164,10 @@ fun HomeScreen(
                     ) 
                 },
                 actions = {
-                    IconButton(onClick = { showImportDialog = true }) {
+                    IconButton(
+                        onClick = { showImportDialog = true },
+                        modifier = Modifier.background(com.example.ui.theme.IconButtonBg, CircleShape)
+                    ) {
                         Icon(androidx.compose.material.icons.Icons.Filled.Download, contentDescription = "Zaimportuj wydarzenie")
                     }
                 },
@@ -220,7 +250,7 @@ fun EventCard(
     val textColor = if (hasImage) Color.White else themeConfig.textColor
     val secondaryTextColor = if (hasImage) Color.White.copy(alpha = 0.8f) else themeConfig.secondaryTextColor
     val labelColor = if (hasImage) Color.White.copy(alpha = 0.7f) else themeConfig.labelColor
-    val backgroundColor = if (themeConfig.name == "Classic") Color(event.colorArgb) else themeConfig.backgroundColor
+    val backgroundColor = themeConfig.backgroundColor
     val fontFamily = themeConfig.fontFamily
     val titleFontWeight = themeConfig.titleFontWeight
 
@@ -228,11 +258,11 @@ fun EventCard(
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (themeConfig.hasDecorativeBorder && !hasImage) androidx.compose.ui.Modifier.border(2.dp, themeConfig.accentColor, RoundedCornerShape(24.dp))
+                if (themeConfig.hasDecorativeBorder && !hasImage) androidx.compose.ui.Modifier.border(2.dp, themeConfig.accentColor, RoundedCornerShape(32.dp))
                 else androidx.compose.ui.Modifier
             )
             .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
         ),

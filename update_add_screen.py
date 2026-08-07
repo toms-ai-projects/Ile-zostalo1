@@ -1,106 +1,13 @@
-package com.example.ui.add
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import android.os.Build
-import android.content.Intent
-import android.provider.Settings
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import androidx.compose.ui.text.input.KeyboardType
-import android.app.AlarmManager
+import re
 
+with open('/tmp/add_screen.txt', 'r') as f:
+    text = f.read()
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import com.example.ui.theme.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ui.AppViewModelProvider
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.Calendar
-import java.util.TimeZone
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
+# Find the start of AddEventBody
+match = re.search(r'@Composable\s*fun AddEventBody.*?\{', text, re.DOTALL)
+start_idx = match.start()
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AddEventScreen(
-    navigateBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: AddEventViewModel = viewModel(factory = AppViewModelProvider.Factory)
-) {
-    val coroutineScope = rememberCoroutineScope()
-    val uiState = viewModel.eventUiState
-
-    val title = if (uiState.eventDetails.id == 0) "Dodaj wydarzenie" else "Edytuj wydarzenie"
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = navigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        AddEventBody(
-            eventDetails = uiState.eventDetails,
-            onValueChange = viewModel::updateUiState,
-            onSaveClick = {
-                coroutineScope.launch {
-                    viewModel.saveEvent()
-                    navigateBack()
-                }
-            },
-            isEntryValid = uiState.isEntryValid,
-            modifier = modifier
-                .padding(innerPadding)
-                .fillMaxWidth()
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+new_body = """@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEventBody(
     eventDetails: com.example.ui.add.EventDetails,
@@ -121,7 +28,7 @@ fun AddEventBody(
     }
 
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = if (eventDetails.targetTimestamp > 0) eventDetails.targetTimestamp else System.currentTimeMillis()
+        initialSelectedDateMillis = if (eventDetails.targetTimestamp > 0) eventDetails.targetTimestamp else null
     )
     val timePickerState = rememberTimePickerState(
         initialHour = calendar.get(Calendar.HOUR_OF_DAY),
@@ -134,12 +41,13 @@ fun AddEventBody(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    val millis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                    val selectedCalendar = Calendar.getInstance().apply { timeInMillis = millis }
-                    calendar.set(Calendar.YEAR, selectedCalendar.get(Calendar.YEAR))
-                    calendar.set(Calendar.MONTH, selectedCalendar.get(Calendar.MONTH))
-                    calendar.set(Calendar.DAY_OF_MONTH, selectedCalendar.get(Calendar.DAY_OF_MONTH))
-                    onValueChange(eventDetails.copy(targetTimestamp = calendar.timeInMillis))
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedCalendar = Calendar.getInstance().apply { timeInMillis = millis }
+                        calendar.set(Calendar.YEAR, selectedCalendar.get(Calendar.YEAR))
+                        calendar.set(Calendar.MONTH, selectedCalendar.get(Calendar.MONTH))
+                        calendar.set(Calendar.DAY_OF_MONTH, selectedCalendar.get(Calendar.DAY_OF_MONTH))
+                        onValueChange(eventDetails.copy(targetTimestamp = calendar.timeInMillis))
+                    }
                     showDatePicker = false
                 }) {
                     Text("OK")
@@ -209,14 +117,14 @@ fun AddEventBody(
 
     val inputShape = RoundedCornerShape(18.dp)
     val inputColors = TextFieldDefaults.colors(
-        focusedContainerColor = com.example.ui.theme.FormFieldBg,
-        unfocusedContainerColor = com.example.ui.theme.FormFieldBg,
+        focusedContainerColor = com.example.ui.theme.InputBg,
+        unfocusedContainerColor = com.example.ui.theme.InputBg,
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
-        focusedTextColor = com.example.ui.theme.TextLight,
-        unfocusedTextColor = com.example.ui.theme.TextLight,
-        focusedPlaceholderColor = com.example.ui.theme.FormFieldPlaceholder,
-        unfocusedPlaceholderColor = com.example.ui.theme.FormFieldPlaceholder
+        focusedTextColor = com.example.ui.theme.TextDark,
+        unfocusedTextColor = com.example.ui.theme.TextDark,
+        focusedPlaceholderColor = com.example.ui.theme.InputPlaceholder,
+        unfocusedPlaceholderColor = com.example.ui.theme.InputPlaceholder
     )
     val labelStyle = TextStyle(
         fontFamily = com.example.ui.theme.QuicksandFontFamily,
@@ -239,7 +147,7 @@ fun AddEventBody(
             TextField(
                 value = eventDetails.name,
                 onValueChange = { onValueChange(eventDetails.copy(name = it)) },
-                placeholder = { Text("Np. Urodziny", style = TextStyle(color = com.example.ui.theme.FormFieldPlaceholder)) },
+                placeholder = { Text("Np. Urodziny", style = TextStyle(color = com.example.ui.theme.InputPlaceholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
@@ -252,37 +160,37 @@ fun AddEventBody(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Card(
+                OutlinedCard(
                     onClick = { showDatePicker = true },
                     modifier = Modifier.weight(1f),
                     shape = inputShape,
-                    colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.FormFieldBg),
-                    
+                    colors = CardDefaults.outlinedCardColors(containerColor = com.example.ui.theme.InputBg),
+                    border = null
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(dateString, color = if (eventDetails.targetTimestamp > 0) com.example.ui.theme.TextLight else com.example.ui.theme.FormFieldPlaceholder)
-                        Icon(Icons.Filled.DateRange, contentDescription = null, tint = com.example.ui.theme.TextLight)
+                        Text(dateString, color = if (eventDetails.targetTimestamp > 0) com.example.ui.theme.TextDark else com.example.ui.theme.InputPlaceholder)
+                        Icon(Icons.Filled.DateRange, contentDescription = null, tint = com.example.ui.theme.TextDark)
                     }
                 }
                 
-                Card(
+                OutlinedCard(
                     onClick = { showTimePicker = true },
                     modifier = Modifier.weight(1f),
                     shape = inputShape,
-                    colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.FormFieldBg),
-                    
+                    colors = CardDefaults.outlinedCardColors(containerColor = com.example.ui.theme.InputBg),
+                    border = null
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(timeString, color = if (eventDetails.targetTimestamp > 0) com.example.ui.theme.TextLight else com.example.ui.theme.FormFieldPlaceholder)
-                        Icon(Icons.Filled.DateRange, contentDescription = null, tint = com.example.ui.theme.TextLight) // Or a clock icon
+                        Text(timeString, color = if (eventDetails.targetTimestamp > 0) com.example.ui.theme.TextDark else com.example.ui.theme.InputPlaceholder)
+                        Icon(Icons.Filled.DateRange, contentDescription = null, tint = com.example.ui.theme.TextDark) // Or a clock icon
                     }
                 }
             }
@@ -303,7 +211,7 @@ fun AddEventBody(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     colors = inputColors,
                     shape = inputShape,
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
@@ -373,7 +281,7 @@ fun AddEventBody(
                     keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                     colors = inputColors,
                     shape = inputShape,
-                    placeholder = { Text("0", color = com.example.ui.theme.FormFieldPlaceholder) }
+                    placeholder = { Text("0", color = com.example.ui.theme.InputPlaceholder) }
                 )
                 
                 // Pill segment
@@ -391,7 +299,7 @@ fun AddEventBody(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(if (isSelected) com.example.ui.theme.AccentOrange else Color.Transparent)
+                                .background(if (isSelected) com.example.ui.theme.AccentWarm else Color.Transparent)
                                 .clickable { 
                                     if (unit == "Dni") reminderUnit = "Dni"
                                     else if (unit == "Godz.") reminderUnit = "Godziny"
@@ -402,7 +310,7 @@ fun AddEventBody(
                         ) {
                             Text(
                                 text = unit,
-                                color = if (isSelected) Color.White else com.example.ui.theme.TextLight,
+                                color = if (isSelected) Color.White else com.example.ui.theme.TextDark,
                                 style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp, fontFamily = com.example.ui.theme.QuicksandFontFamily)
                             )
                         }
@@ -414,7 +322,7 @@ fun AddEventBody(
             TextField(
                 value = eventDetails.note,
                 onValueChange = { onValueChange(eventDetails.copy(note = it)) },
-                placeholder = { Text("Notatka (opcjonalnie)", color = com.example.ui.theme.FormFieldPlaceholder) },
+                placeholder = { Text("Notatka (opcjonalnie)", color = com.example.ui.theme.InputPlaceholder) },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 colors = inputColors,
@@ -430,13 +338,13 @@ fun AddEventBody(
             ) {
                 Button(
                     onClick = { photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = com.example.ui.theme.AccentOrange)
+                    colors = ButtonDefaults.buttonColors(containerColor = com.example.ui.theme.AccentWarm)
                 ) {
                     Text(if (eventDetails.imageUri.isNotBlank()) "Zmień zdjęcie" else "Wybierz zdjęcie")
                 }
                 if (eventDetails.imageUri.isNotBlank()) {
                     TextButton(onClick = { onValueChange(eventDetails.copy(imageUri = "")) }) {
-                        Text("Usuń", color = com.example.ui.theme.TextLight)
+                        Text("Usuń", color = com.example.ui.theme.TextDark)
                     }
                 }
             }
@@ -471,7 +379,7 @@ fun AddEventBody(
                                 .background(themeConfig.backgroundColor)
                                 .border(
                                     width = if (isSelected) 3.dp else 1.dp,
-                                    color = if (isSelected) com.example.ui.theme.AccentOrange else Color(0x33000000),
+                                    color = if (isSelected) com.example.ui.theme.AccentWarm else Color(0x33000000),
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .padding(8.dp)
@@ -490,7 +398,7 @@ fun AddEventBody(
                                 else -> "Minimalistyczny"
                             },
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) com.example.ui.theme.AccentOrange else com.example.ui.theme.TextLight
+                            color = if (isSelected) com.example.ui.theme.AccentWarm else com.example.ui.theme.TextDark
                         )
                     }
                 }
@@ -504,7 +412,7 @@ fun AddEventBody(
                 .fillMaxWidth()
                 .background(
                     androidx.compose.ui.graphics.Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, com.example.ui.theme.BgLight.copy(alpha=0.9f), com.example.ui.theme.BgLight),
+                        colors = listOf(Color.Transparent, com.example.ui.theme.BgWarm.copy(alpha=0.9f), com.example.ui.theme.BgWarm),
                         startY = 0f
                     )
                 )
@@ -517,7 +425,7 @@ fun AddEventBody(
                 shape = RoundedCornerShape(24.dp),
                 contentPadding = PaddingValues(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = com.example.ui.theme.AccentOrange,
+                    containerColor = com.example.ui.theme.AccentWarm,
                     contentColor = Color.White
                 )
             ) {
@@ -533,3 +441,9 @@ fun AddEventBody(
         }
     }
 }
+"""
+
+new_text = text[:start_idx] + new_body
+with open('app/src/main/java/com/example/ui/add/AddEventScreen.kt', 'w') as f:
+    f.write(new_text)
+
