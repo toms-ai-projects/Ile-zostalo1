@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Event::class], version = 7, exportSchema = false)
+@Database(entities = [Event::class], version = 8, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun eventDao(): EventDao
@@ -15,6 +15,18 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var Instance: AppDatabase? = null
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // SQLite wymaga stałej wartości domyślnej w ALTER TABLE — nie da się tu
+                // odwołać do innej kolumny. Dajemy 0 jako placeholder, po czym od razu
+                // nadpisujemy istniejące wiersze targetTimestamp (brak minionego czasu =
+                // pasek/pierścień postępu startuje od 0%, zamiast zgadywać prawdziwą datę
+                // utworzenia sprzed migracji).
+                db.execSQL("ALTER TABLE events ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE events SET createdAt = targetTimestamp WHERE createdAt = 0")
+            }
+        }
 
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -46,7 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, AppDatabase::class.java, "countdown_database")
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration(true)
                     .build().also { Instance = it }
             }

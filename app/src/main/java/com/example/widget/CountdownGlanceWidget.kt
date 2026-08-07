@@ -128,22 +128,26 @@ class CountdownGlanceWidget : GlanceAppWidget() {
                             Box(modifier = GlanceModifier.fillMaxSize().background(Color(0x80000000))) {}
                         }
                         
+                        // Rozmiary/odstępy dobrane tak, by cała kolumna (nazwa + duża liczba
+                        // + etykieta + godz./min.) mieściła się w typowej minimalnej wysokości
+                        // widgetu bez przycinania ostatniej linii — poprzednia wersja (22/16/18sp
+                        // + odstępy 8dp) potrafiła uciąć "Xg Ym" u dołu.
                         Column(
-                            modifier = GlanceModifier.fillMaxSize().padding(16.dp),
+                            modifier = GlanceModifier.fillMaxSize().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = activeEvent.name,
                                 style = TextStyle(
-                                    fontSize = 22.sp,
+                                    fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = androidx.glance.unit.ColorProvider(textColor),
                                     textAlign = TextAlign.Center
                                 ),
                                 maxLines = 1
                             )
-                            Spacer(modifier = GlanceModifier.height(8.dp))
+                            Spacer(modifier = GlanceModifier.height(4.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -151,21 +155,23 @@ class CountdownGlanceWidget : GlanceAppWidget() {
                                 Text(
                                     text = "$daysLeft",
                                     style = TextStyle(
-                                        fontSize = 48.sp,
+                                        fontSize = 44.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = androidx.glance.unit.ColorProvider(textColor)
-                                    )
+                                    ),
+                                    maxLines = 1
                                 )
                             }
                             Text(
                                 text = label,
                                 style = TextStyle(
-                                    fontSize = 16.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = androidx.glance.unit.ColorProvider(secondaryTextColor)
-                                )
+                                ),
+                                maxLines = 1
                             )
-                            Spacer(modifier = GlanceModifier.height(8.dp))
+                            Spacer(modifier = GlanceModifier.height(4.dp))
                             Row(
                                 modifier = GlanceModifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -173,10 +179,11 @@ class CountdownGlanceWidget : GlanceAppWidget() {
                                 Text(
                                     text = "${hoursLeft}g ${minutesLeft}m",
                                     style = TextStyle(
-                                        fontSize = 18.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = androidx.glance.unit.ColorProvider(secondaryTextColor)
-                                    )
+                                    ),
+                                    maxLines = 1
                                 )
                             }
                         }

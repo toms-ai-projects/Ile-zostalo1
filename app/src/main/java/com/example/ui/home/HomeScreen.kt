@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -182,9 +181,9 @@ fun HomeScreen(
                 floatingActionButton = {
             FloatingActionButton(
                 onClick = navigateToAdd,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp),
+                containerColor = com.example.ui.theme.AccentOrange,
+                contentColor = Color.White,
+                shape = CircleShape,
                 modifier = Modifier.size(64.dp)
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Dodaj wydarzenie", modifier = Modifier.size(32.dp))
@@ -238,21 +237,23 @@ fun EventCard(
     val isPast = diffMillis < 0
     val absDiff = Math.abs(diffMillis)
     val daysLeft = TimeUnit.MILLISECONDS.toDays(absDiff)
-    val hoursLeft = TimeUnit.MILLISECONDS.toHours(absDiff) % 24
-    val minutesLeft = TimeUnit.MILLISECONDS.toMinutes(absDiff) % 60
-    val label = if (isPast) "minęło" else "pozostało"
-    
-    val dateFormatter = remember { SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault()) }
+    val progress = event.progressFraction(currentTime)
+
+    // Bez roku — design karty listy pokazuje "12 sierpnia, 18:00" (rok jest tylko w
+    // widoku szczegółów, gdzie miejsca jest więcej).
+    val dateFormatter = remember { SimpleDateFormat("dd MMMM, HH:mm", Locale.getDefault()) }
     val dateString = dateFormatter.format(Date(nextTimestamp))
 
     val hasImage = event.imageUri.isNotBlank()
     val themeConfig = com.example.ui.theme.EventThemes.getTheme(event.theme)
     val textColor = if (hasImage) Color.White else themeConfig.textColor
     val secondaryTextColor = if (hasImage) Color.White.copy(alpha = 0.8f) else themeConfig.secondaryTextColor
-    val labelColor = if (hasImage) Color.White.copy(alpha = 0.7f) else themeConfig.labelColor
     val backgroundColor = themeConfig.backgroundColor
     val fontFamily = themeConfig.fontFamily
     val titleFontWeight = themeConfig.titleFontWeight
+    val pillTextColor = if (hasImage) Color.White.copy(alpha = 0.85f) else themeConfig.textColor.copy(alpha = 0.6f)
+    val progressTrackColor = if (hasImage) Color.White.copy(alpha = 0.25f) else themeConfig.accentColor.copy(alpha = 0.15f)
+    val progressFillColor = if (hasImage) Color.White else themeConfig.accentColor
 
     Card(
         modifier = Modifier
@@ -269,14 +270,6 @@ fun EventCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box {
-            if (themeConfig.hasCornerIcon && !hasImage) {
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = null,
-                    tint = themeConfig.accentColor.copy(alpha = 0.2f),
-                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(32.dp)
-                )
-            }
             if (hasImage) {
                 val imageModel = if (event.imageUri.startsWith("/")) java.io.File(event.imageUri) else event.imageUri
                 coil.compose.AsyncImage(
@@ -294,73 +287,64 @@ fun EventCard(
             Column(
                 modifier = Modifier
                     .padding(20.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxWidth()
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = event.name,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = titleFontWeight,
+                            fontFamily = fontFamily,
+                            fontSize = 17.sp
+                        ),
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(100))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = if (isPast) "$daysLeft dni temu" else "$daysLeft dni",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = fontFamily,
+                                fontSize = 12.sp
+                            ),
+                            color = pillTextColor,
+                            maxLines = 1
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = event.name,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = titleFontWeight,
-                        fontFamily = fontFamily,
-                        fontSize = 18.sp
-                    ),
-                    color = textColor,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    text = dateString,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium, fontFamily = fontFamily),
+                    color = secondaryTextColor
                 )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = dateString,
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium, fontFamily = fontFamily),
-                color = secondaryTextColor,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "${daysLeft}d",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        fontFamily = fontFamily
-                    ),
-                    color = textColor
-                )
-                Text(
-                    text = "${hoursLeft}h",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        fontFamily = fontFamily
-                    ),
-                    color = textColor
-                )
-                Text(
-                    text = "${minutesLeft}m",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        fontFamily = fontFamily
-                    ),
-                    color = textColor
-                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .background(progressTrackColor, RoundedCornerShape(100))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction = progress)
+                            .fillMaxHeight()
+                            .background(progressFillColor, RoundedCornerShape(100))
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = label.uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold, 
-                    letterSpacing = 1.sp
-                ),
-                color = labelColor,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-        }
         }
     }
 }

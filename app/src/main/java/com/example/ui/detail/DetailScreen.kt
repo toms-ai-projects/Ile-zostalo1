@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -39,6 +38,7 @@ import java.util.Locale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.AppViewModelProvider
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
@@ -58,10 +58,17 @@ fun DetailScreen(
 
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     var showExportDialog by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000L) // 1 second update
-            currentTime = System.currentTimeMillis()
+    // Sekundy tykają tylko gdy ten ekran jest faktycznie na pierwszym planie (RESUMED).
+    // To jedyne miejsce w appce z odświeżaniem co 1s — repeatOnLifecycle pauzuje pętlę
+    // (i przestaje budzić CPU co sekundę) gdy appka trafi w tło albo ekran zgaśnie,
+    // zamiast tykać bezwarunkowo tak długo, jak composable jest w kompozycji.
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+            while (true) {
+                currentTime = System.currentTimeMillis()
+                delay(1000L)
+            }
         }
     }
 
@@ -104,6 +111,9 @@ fun DetailScreen(
     val hoursLeft = TimeUnit.MILLISECONDS.toHours(absDiff) % 24
     val minutesLeft = TimeUnit.MILLISECONDS.toMinutes(absDiff) % 60
     val secondsLeft = TimeUnit.MILLISECONDS.toSeconds(absDiff) % 60
+    // Uproszczenie: liczone względem oryginalnego targetTimestamp, nie najbliższego
+    // wystąpienia cyklicznego — patrz komentarz przy Event.progressFraction().
+    val progressFraction = event.progressFraction(currentTime)
 
     val themeConfig = com.example.ui.theme.EventThemes.getTheme(event.theme)
     val backgroundColor = themeConfig.backgroundColor
@@ -187,14 +197,6 @@ fun DetailScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Box {
-                    if (themeConfig.hasCornerIcon && !hasImage) {
-                        Icon(
-                            imageVector = Icons.Filled.DateRange,
-                            contentDescription = null,
-                            tint = themeConfig.accentColor.copy(alpha = 0.2f),
-                            modifier = Modifier.align(Alignment.TopEnd).padding(26.dp).size(48.dp)
-                        )
-                    }
                     if (hasImage) {
                         val imageModel = if (event.imageUri.startsWith("/")) java.io.File(event.imageUri) else event.imageUri
                         coil.compose.AsyncImage(
@@ -263,29 +265,67 @@ fun DetailScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    Column(
+                    Box(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = daysLeft.toString(),
-                            style = MaterialTheme.typography.displayLarge.copy(
-                                fontWeight = if (titleFontWeight == FontWeight.Normal) FontWeight.Medium else FontWeight.Black,
-                                fontSize = 72.sp,
-                                letterSpacing = (-2).sp,
-                                fontFamily = fontFamily
-                            ),
-                            color = textColor
-                        )
-                        Text(
-                            text = if (isPast) "DNI TEMU" else "POZOSTAŁO DNI",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 2.sp,
-                                fontFamily = fontFamily
-                            ),
-                            color = labelColor
-                        )
+                        // Pierścień postępu: promień 88dp / grubość 14dp / start na
+                        // godzinie 12 — dokładnie wg wymiarów z pliku designu (koło
+                        // 200x200, r=88, stroke-width=14, rotate(-90)).
+                        androidx.compose.foundation.Canvas(modifier = Modifier.size(200.dp)) {
+                            val strokeWidthPx = 14.dp.toPx()
+                            val diameterPx = 176.dp.toPx()
+                            val topLeft = androidx.compose.ui.geometry.Offset(
+                                (size.width - diameterPx) / 2f,
+                                (size.height - diameterPx) / 2f
+                            )
+                            val arcSize = androidx.compose.ui.geometry.Size(diameterPx, diameterPx)
+                            drawArc(
+                                color = dividerColor,
+                                startAngle = -90f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = strokeWidthPx,
+                                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                                ),
+                                topLeft = topLeft,
+                                size = arcSize
+                            )
+                            drawArc(
+                                color = iconTint,
+                                startAngle = -90f,
+                                sweepAngle = 360f * progressFraction,
+                                useCenter = false,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = strokeWidthPx,
+                                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                                ),
+                                topLeft = topLeft,
+                                size = arcSize
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = daysLeft.toString(),
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontWeight = if (titleFontWeight == FontWeight.Normal) FontWeight.Medium else FontWeight.Black,
+                                    fontSize = 56.sp,
+                                    letterSpacing = (-2).sp,
+                                    fontFamily = fontFamily
+                                ),
+                                color = textColor
+                            )
+                            Text(
+                                text = if (isPast) "DNI TEMU" else "POZOSTAŁO DNI",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 2.sp,
+                                    fontFamily = fontFamily
+                                ),
+                                color = labelColor
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))

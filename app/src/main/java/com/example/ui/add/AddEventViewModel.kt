@@ -77,7 +77,11 @@ data class EventDetails(
     val reminderDays: String = "",
     val reminderHours: String = "",
     val reminderMinutes: String = "",
-    val theme: String = "Classic"
+    val theme: String = "Classic",
+    // 0 = "jeszcze nie zapisane" (nowe wydarzenie) — toEvent() podstawia wtedy
+    // System.currentTimeMillis(). Dla edytowanego wydarzenia to prawdziwy createdAt
+    // wczytany z bazy przez toEventDetails(), więc kolejne zapisy go nie ruszają.
+    val createdAt: Long = 0L
 )
 
 fun EventDetails.toEvent(): Event = Event(
@@ -91,7 +95,8 @@ fun EventDetails.toEvent(): Event = Event(
     reminderDays = reminderDays.toIntOrNull(),
     reminderHours = reminderHours.toIntOrNull(),
     reminderMinutes = reminderMinutes.toIntOrNull(),
-    theme = theme
+    theme = theme,
+    createdAt = if (createdAt > 0L) createdAt else System.currentTimeMillis()
 )
 
 fun Event.toEventUiState(): EventUiState = EventUiState(
@@ -110,5 +115,6 @@ fun Event.toEventDetails(): EventDetails = EventDetails(
     reminderDays = reminderDays?.toString() ?: "",
     reminderHours = reminderHours?.toString() ?: "",
     reminderMinutes = reminderMinutes?.toString() ?: "",
-    theme = theme
+    theme = theme,
+    createdAt = createdAt
 )

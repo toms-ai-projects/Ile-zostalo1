@@ -20,8 +20,7 @@ data class EventThemeConfig(
     val accentColor: Color,
     val fontFamily: FontFamily = FontFamily.Default,
     val titleFontWeight: FontWeight = FontWeight.Bold,
-    val hasDecorativeBorder: Boolean = false,
-    val hasCornerIcon: Boolean = false
+    val hasDecorativeBorder: Boolean = false
 )
 
 object EventThemes {
@@ -68,7 +67,6 @@ object EventThemes {
             accentColor = Color(0xFFC4501C),
             fontFamily = QuicksandFontFamily,
             titleFontWeight = FontWeight.SemiBold,
-            hasCornerIcon = true,
         ),
         // "Minimalistyczny" — Roboto Mono, szarość #3A3A3A na tle #EDEDED
         EventThemeConfig(
