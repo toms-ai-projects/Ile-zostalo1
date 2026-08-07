@@ -13,6 +13,11 @@ val TextLight = Color(0xFF2B241D)
 // przełączników
 val AccentOrange = Color(0xFFFF8A5B)
 
+// Drugi, głębszy odcień pomarańczu (rdzawy) — design świadomie używa DWÓCH pomarańczy:
+// AccentOrange do głównych CTA, i tego do drugorzędnych akcentów w formularzu (ikony
+// pól daty/godziny, obrys przycisku "Wybierz zdjęcie"). Nie mylić z AccentOrange.
+val AccentRust = Color(0xFFC4501C)
+
 // Tło pól formularza (input, textarea)
 val FormFieldBg = Color(0xFFF6EEE3)
 val FormFieldPlaceholder = Color(0xFFB8A995)
