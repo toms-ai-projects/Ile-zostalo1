@@ -27,6 +27,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Generate debug keystore
+        # debug.keystore is intentionally gitignored (generated locally by each
+        # dev, same as Android Studio's default). app/build.gradle.kts wires the
+        # "debugConfig" signing config to ${rootDir}/debug.keystore with the
+        # same well-known alias/passwords Android Studio uses for its own
+        # auto-generated debug keystore, so recreate it with those exact values.
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Run unit tests (app/src/test)
         run: ./gradlew testDebugUnitTest --stacktrace
 
