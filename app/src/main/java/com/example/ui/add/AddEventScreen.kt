@@ -135,10 +135,14 @@ fun AddEventBody(
             confirmButton = {
                 TextButton(onClick = {
                     val millis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                    val selectedCalendar = Calendar.getInstance().apply { timeInMillis = millis }
-                    calendar.set(Calendar.YEAR, selectedCalendar.get(Calendar.YEAR))
-                    calendar.set(Calendar.MONTH, selectedCalendar.get(Calendar.MONTH))
-                    calendar.set(Calendar.DAY_OF_MONTH, selectedCalendar.get(Calendar.DAY_OF_MONTH))
+                    // DatePicker zawsze zwraca północ UTC dla wybranego dnia — trzeba
+                    // odczytać rok/miesiąc/dzień przez kalendarz UTC, inaczej w strefach
+                    // z ujemnym przesunięciem względem UTC (np. USA) wybrany dzień
+                    // potrafi się cofnąć o jeden.
+                    val utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = millis }
+                    calendar.set(Calendar.YEAR, utcCalendar.get(Calendar.YEAR))
+                    calendar.set(Calendar.MONTH, utcCalendar.get(Calendar.MONTH))
+                    calendar.set(Calendar.DAY_OF_MONTH, utcCalendar.get(Calendar.DAY_OF_MONTH))
                     onValueChange(eventDetails.copy(targetTimestamp = calendar.timeInMillis))
                     showDatePicker = false
                 }) {
@@ -185,16 +189,35 @@ fun AddEventBody(
     val dateString = if (eventDetails.targetTimestamp > 0) dateFormatter.format(Date(eventDetails.targetTimestamp)) else "Wybierz datę"
     val timeString = if (eventDetails.targetTimestamp > 0) timeFormatter.format(Date(eventDetails.targetTimestamp)) else "Wybierz godzinę"
 
+    val context = LocalContext.current
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
-            uri?.let {
-                onValueChange(eventDetails.copy(imageUri = it.toString()))
+            if (uri != null) {
+                // Zdjęcie z Photo Pickera trzeba skopiować do pliku aplikacji: surowy
+                // content:// URI ma tylko tymczasowe uprawnienia (mogą wygasnąć np. po
+                // restarcie) i nie da się go odczytać przez BitmapFactory.decodeFile,
+                // z którego korzysta widget na ekranie głównym.
+                val savedPath = com.example.utils.ImageUtils.saveAndScaleImage(context, uri)
+                if (savedPath != null) {
+                    onValueChange(eventDetails.copy(imageUri = savedPath))
+                } else {
+                    // Fallback, gdyby kopiowanie się nie powiodło — spróbuj przynajmniej
+                    // utrwalić dostęp do oryginalnego URI (widget nadal go nie pokaże).
+                    try {
+                        context.contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                        onValueChange(eventDetails.copy(imageUri = uri.toString()))
+                    } catch (e2: Exception) {
+                        onValueChange(eventDetails.copy(imageUri = uri.toString()))
+                    }
+                }
             }
         }
     )
 
-    val context = LocalContext.current
     var notificationPermissionState: com.google.accompanist.permissions.PermissionState? = null
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         notificationPermissionState = com.google.accompanist.permissions.rememberPermissionState(
@@ -205,6 +228,30 @@ fun AddEventBody(
                 notificationPermissionState.launchPermissionRequest()
             }
         }
+    }
+
+    var showExactAlarmDialog by remember { mutableStateOf(false) }
+    val alarmManager = context.getSystemService(android.content.Context.ALARM_SERVICE) as AlarmManager
+
+    if (showExactAlarmDialog) {
+        AlertDialog(
+            onDismissRequest = { showExactAlarmDialog = false },
+            title = { Text("Wymagane uprawnienie") },
+            text = { Text("Aby przypomnienia przychodziły dokładnie o czasie, musisz zezwolić na dokładne alarmy w ustawieniach.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showExactAlarmDialog = false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                    }
+                }) {
+                    Text("Przejdź do ustawień")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExactAlarmDialog = false }) { Text("Anuluj") }
+            }
+        )
     }
 
     val inputShape = RoundedCornerShape(18.dp)
@@ -368,6 +415,9 @@ fun AddEventBody(
                                 onValueChange(eventDetails.copy(reminderDays = "", reminderHours = "", reminderMinutes = newMinutes))
                             }
                         }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                            showExactAlarmDialog = true
+                        }
                     },
                     modifier = Modifier.width(80.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
@@ -408,6 +458,14 @@ fun AddEventBody(
                         }
                     }
                 }
+            }
+
+            if (notificationPermissionState != null && !notificationPermissionState.status.isGranted) {
+                Text(
+                    "Brak uprawnień do powiadomień. Przypomnienia nie będą działać, dopóki nie wyrazisz zgody w ustawieniach.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             Text("NOTATKA", style = labelStyle)

@@ -103,7 +103,9 @@ class CountdownGlanceWidget : GlanceAppWidget() {
                     val themeConfig = com.example.ui.theme.EventThemes.getTheme(activeEvent.theme)
                     val textColor = if (hasImage) Color.White else themeConfig.textColor
                     val secondaryTextColor = if (hasImage) Color.White.copy(alpha = 0.8f) else themeConfig.secondaryTextColor
-                    val backgroundColor = if (themeConfig.name == "Classic") Color(activeEvent.colorArgb) else themeConfig.backgroundColor
+                    // Zawsze kolor motywu — musi być spójne z HomeScreen/DetailScreen,
+                    // które od commitu "UI refinements" też już nie używają colorArgb.
+                    val backgroundColor = themeConfig.backgroundColor
 
                     var bitmap: android.graphics.Bitmap? = null
                     if (hasImage) {
