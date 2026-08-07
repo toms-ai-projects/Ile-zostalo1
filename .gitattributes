@@ -1,0 +1,5 @@
+# The gradlew shell script must always keep LF endings — CRLF breaks the
+# shebang/interpreter on Linux CI runners (GitHub Actions ubuntu-latest).
+/gradlew text eol=lf
+/gradlew.bat text eol=crlf
+/gradle/wrapper/gradle-wrapper.jar binary
