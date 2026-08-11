@@ -7,6 +7,11 @@ enum class RecurrenceType {
     NONE, WEEKLY, MONTHLY, YEARLY
 }
 
+private const val DAY_MILLIS = 24 * 60 * 60 * 1000f
+// Ile dni przed celem pasek/pierścień postępu pokazuje dokładnie 50% — patrz
+// Event.progressFraction().
+private const val PROGRESS_CURVE_K_DAYS = 14f
+
 @Entity(tableName = "events")
 data class Event(
     @PrimaryKey(autoGenerate = true)
@@ -21,15 +26,28 @@ data class Event(
     val reminderHours: Int? = null,
     val reminderMinutes: Int? = null,
     val theme: String = "Classic",
-    // Kiedy wydarzenie zostało utworzone — używane wyłącznie do liczenia paska/pierścienia
-    // postępu (ile czasu już minęło względem całego okresu od utworzenia do daty docelowej).
-    // Rekordy sprzed tej kolumny dostają wartość targetTimestamp w migracji (patrz
-    // AppDatabase.MIGRATION_7_8), co daje bezpieczne "0% minęło" zamiast zgadywania.
+    // Kiedy wydarzenie zostało utworzone. Nieużywane przez progressFraction() (patrz
+    // komentarz tam) od czasu, gdy pasek/pierścień postępu przeszedł na krzywą czasu
+    // pozostałego — zostaje w schemacie jako proste, nieszkodliwe metadane (np. do
+    // ewentualnego sortowania "od najnowszych" w przyszłości), nie warto robić kolejnej
+    // migracji tylko po to, żeby ją usunąć.
     val createdAt: Long = System.currentTimeMillis()
 ) {
     /**
-     * Ułamek [0..1] czasu, jaki upłynął od utworzenia wydarzenia do jego daty docelowej.
-     * Używane przez pasek postępu na liście (Home) i pierścień postępu w szczegółach.
+     * Ułamek [0..1] "pilności" wydarzenia, używany przez pasek postępu na liście (Home)
+     * i pierścień postępu w szczegółach.
+     *
+     * Pierwsza wersja liczyła to jako czas-od-utworzenia / czas-utworzenie-do-celu, ale to
+     * dawało niespójne wyniki dla dwóch wydarzeń z bardzo podobną datą docelową, jeśli
+     * dodano je w różnym czasie — użytkownik nie widzi "kiedy dodano", więc różnica
+     * wyglądała jak błąd. Teraz to krzywa zależna WYŁĄCZNIE od tego, ile dni zostało do
+     * celu: K / (K + dni_pozostałe). Właściwości:
+     *  - ta sama data celu → zawsze ten sam wynik, niezależnie od daty utworzenia;
+     *  - nigdy nie "zamarza" na 0% dla odległych wydarzeń (w przeciwieństwie do np. sztywnego
+     *    30-dniowego okna) — zbliża się do zera asymptotycznie i codziennie się porusza;
+     *  - w dniu K (domyślnie 14 dni przed celem) wynosi dokładnie 50%.
+     * K dobrane empirycznie jako rozsądny środek — łatwo dostroić, jeśli po dłuższym
+     * używaniu appki okaże się za szybkie/wolne.
      *
      * Uproszczenie: dla wydarzeń cyklicznych liczymy względem oryginalnego
      * [targetTimestamp], nie względem najbliższego wystąpienia z [getNextOccurrence] — po
@@ -38,9 +56,9 @@ data class Event(
      * świadomy, bezpieczny wybór (nic się nie psuje, tylko nie "oddaje" cykliczności).
      */
     fun progressFraction(currentTimeMillis: Long = System.currentTimeMillis()): Float {
-        val total = (targetTimestamp - createdAt).toFloat()
-        if (total <= 0f) return 1f
-        return ((currentTimeMillis - createdAt).toFloat() / total).coerceIn(0f, 1f)
+        val daysRemaining = (targetTimestamp - currentTimeMillis).toFloat() / DAY_MILLIS
+        if (daysRemaining <= 0f) return 1f
+        return (PROGRESS_CURVE_K_DAYS / (PROGRESS_CURVE_K_DAYS + daysRemaining)).coerceIn(0f, 1f)
     }
 
     fun getNextOccurrence(currentTimeMillis: Long = System.currentTimeMillis()): Long {
