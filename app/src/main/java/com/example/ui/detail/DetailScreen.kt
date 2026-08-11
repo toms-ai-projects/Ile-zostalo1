@@ -150,6 +150,15 @@ fun DetailScreen(
                 actions = {
                     val context = androidx.compose.ui.platform.LocalContext.current
                     val coroutineScope = rememberCoroutineScope()
+                    // Edytuj/usuń przeniesione tu z nagłówka karty poniżej — wszystkie
+                    // akcje (edytuj, udostępnij, eksportuj, usuń) żyją teraz razem w jednym
+                    // pasku zamiast być rozdzielone między górny pasek a kolorową kartę.
+                    IconButton(
+                        onClick = { navigateToEdit(event.id) },
+                        modifier = Modifier.background(com.example.ui.theme.IconButtonBg, shape = androidx.compose.foundation.shape.CircleShape)
+                    ) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Edytuj")
+                    }
                     IconButton(onClick = {
                         coroutineScope.launch {
                             try {
@@ -164,6 +173,15 @@ fun DetailScreen(
                     }
                     IconButton(onClick = { showExportDialog = true }, modifier = Modifier.background(com.example.ui.theme.IconButtonBg, shape = androidx.compose.foundation.shape.CircleShape)) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Eksportuj wydarzenie")
+                    }
+                    IconButton(
+                        onClick = {
+                            viewModel.deleteEvent()
+                            navigateBack()
+                        },
+                        modifier = Modifier.background(com.example.ui.theme.IconButtonBg, shape = androidx.compose.foundation.shape.CircleShape)
+                    ) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Usuń")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -216,50 +234,30 @@ fun DetailScreen(
                             .padding(26.dp)
                             .fillMaxWidth()
                     ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Column {
-                            Text(
-                                text = event.name,
-                                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = titleFontWeight, fontFamily = fontFamily),
-                                color = textColor
-                            )
+                    Column {
+                        // maxLines/ellipsis zostaje mimo że ikony (dawna przyczyna nachodzenia)
+                        // już się stąd wyprowadziły — limit 60 znaków na nazwę czyni to bardziej
+                        // "na wszelki wypadek" niż koniecznością, ale wciąż tani zapobiegacz.
+                        Text(
+                            text = event.name,
+                            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = titleFontWeight, fontFamily = fontFamily),
+                            color = textColor,
+                            maxLines = 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault()).format(Date(nextTimestamp)),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = fontFamily),
+                            color = secondaryTextColor
+                        )
+                        if (event.recurrence != "NONE") {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault()).format(Date(nextTimestamp)),
-                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = fontFamily),
+                                text = recurrenceLabel,
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, fontFamily = fontFamily),
                                 color = secondaryTextColor
                             )
-                            if (event.recurrence != "NONE") {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = recurrenceLabel,
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, fontFamily = fontFamily),
-                                    color = secondaryTextColor
-                                )
-                            }
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            IconButton(
-                                onClick = { navigateToEdit(event.id) },
-                                modifier = Modifier
-                                    .background(cardBackgroundColor, shape = androidx.compose.foundation.shape.CircleShape)
-                            ) {
-                                Icon(Icons.Filled.Edit, contentDescription = "Edytuj", tint = iconTint)
-                            }
-                            IconButton(
-                                onClick = { 
-                                    viewModel.deleteEvent()
-                                    navigateBack()
-                                },
-                                modifier = Modifier
-                                    .background(cardBackgroundColor, shape = androidx.compose.foundation.shape.CircleShape)
-                            ) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Usuń", tint = iconTint)
-                            }
                         }
                     }
 
