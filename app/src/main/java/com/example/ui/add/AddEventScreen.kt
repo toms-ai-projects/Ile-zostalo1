@@ -442,7 +442,15 @@ fun AddEventBody(
                     else -> eventDetails.reminderMinutes ?: ""
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    // Wymusza tę samą wysokość na polu liczby i kontrolce Dni/Godz./Min. —
+                    // domyślna wysokość TextField (56dp) i "wyliczona z paddingu" wysokość
+                    // pigułek różniły się, więc obie kolumny rozciągają się teraz do
+                    // wysokości najwyższego elementu zamiast zgadywać dokładny padding.
+                    modifier = Modifier.height(IntrinsicSize.Min)
+                ) {
                     TextField(
                         value = currentReminderValue,
                         onValueChange = {
@@ -477,7 +485,7 @@ fun AddEventBody(
                                 showExactAlarmDialog = true
                             }
                         },
-                        modifier = Modifier.width(64.dp),
+                        modifier = Modifier.width(64.dp).fillMaxHeight(),
                         textStyle = LocalTextStyle.current.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
@@ -502,6 +510,7 @@ fun AddEventBody(
                     Row(
                         modifier = Modifier
                             .weight(1f)
+                            .fillMaxHeight()
                             .background(com.example.ui.theme.FormFieldBg, inputShape)
                             .padding(3.dp)
                     ) {
@@ -513,14 +522,14 @@ fun AddEventBody(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
+                                    .fillMaxHeight()
                                     .clip(RoundedCornerShape(15.dp))
                                     .background(if (isSelected) com.example.ui.theme.AccentOrange else Color.Transparent)
                                     .clickable {
                                         if (unit == "Dni") reminderUnit = "Dni"
                                         else if (unit == "Godz.") reminderUnit = "Godziny"
                                         else if (unit == "Min.") reminderUnit = "Minuty"
-                                    }
-                                    .padding(vertical = 11.dp),
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -565,16 +574,6 @@ fun AddEventBody(
             // wypełniony) przycisk zdjęcia z ikoną, potem pasek motywów.
             Column {
                 Text("WYGLĄD", style = labelStyle)
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    "Klasyczny to domyślny motyw nowych wydarzeń",
-                    style = TextStyle(
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
-                        fontFamily = com.example.ui.theme.RobotoFontFamily,
-                        color = com.example.ui.theme.TextLight.copy(alpha = 0.5f)
-                    )
-                )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
