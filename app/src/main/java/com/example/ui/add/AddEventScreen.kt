@@ -304,7 +304,12 @@ fun AddEventBody(
                 Text("NAZWA", style = labelStyle)
                 TextField(
                     value = eventDetails.name,
-                    onValueChange = { onValueChange(eventDetails.copy(name = it)) },
+                    // Limit 60 znaków — bez niego nic nie stało na przeszkodzie, żeby tytuł
+                    // był dowolnie długi (patrz naprawa nachodzących na siebie ikon na
+                    // ekranie szczegółów). .take() obcina zamiast blokować dalsze wpisywanie,
+                    // więc wklejenie za długiego tekstu też po prostu ucina nadmiar, zamiast
+                    // nic nie robić.
+                    onValueChange = { onValueChange(eventDetails.copy(name = it.take(60))) },
                     placeholder = { Text("np. Urodziny Mamy", style = TextStyle(color = com.example.ui.theme.FormFieldPlaceholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
