@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.ui.theme.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -254,6 +255,12 @@ fun EventCard(
     val pillTextColor = if (hasImage) Color.White.copy(alpha = 0.85f) else themeConfig.textColor.copy(alpha = 0.6f)
     val progressTrackColor = if (hasImage) Color.White.copy(alpha = 0.25f) else themeConfig.accentColor.copy(alpha = 0.15f)
     val progressFillColor = if (hasImage) Color.White else themeConfig.accentColor
+    // Pigułka z liczbą dni miała ZAWSZE białe półprzezroczyste tło, ale tekst na niej
+    // jest jasny dla ciemnych kart (motyw "Nocny", zdjęcie w tle) — jasny na jasnym,
+    // nieczytelne. luminance() zamiast sprawdzania konkretnej nazwy motywu ("Night"),
+    // żeby to samo zadziałało poprawnie dla każdego przyszłego ciemnego motywu.
+    val isDarkCard = hasImage || backgroundColor.luminance() < 0.5f
+    val pillBg = if (isDarkCard) Color.Black.copy(alpha = 0.28f) else Color.White.copy(alpha = 0.5f)
 
     Card(
         modifier = Modifier
@@ -309,15 +316,15 @@ fun EventCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
-                            .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(100))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .background(pillBg, RoundedCornerShape(100))
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = if (isPast) "$daysLeft dni temu" else "$daysLeft dni",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontFamily = fontFamily,
-                                fontSize = 12.sp
+                                fontSize = 17.sp
                             ),
                             color = pillTextColor,
                             maxLines = 1
