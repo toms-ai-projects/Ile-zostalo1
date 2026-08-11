@@ -388,8 +388,9 @@ fun AddEventBody(
                 }
 
                 var expanded by remember { mutableStateOf(false) }
-                val options = listOf("NONE" to "Brak", "WEEKLY" to "Co tydzień", "MONTHLY" to "Co miesiąc", "YEARLY" to "Co rok")
-                val selectedOption = options.find { it.first == eventDetails.recurrence }?.second ?: "Brak"
+                // "Jednorazowe" (nie "Brak") — dokładne słowo z designu/DetailScreen.kt.
+                val options = listOf("NONE" to "Jednorazowe", "WEEKLY" to "Co tydzień", "MONTHLY" to "Co miesiąc", "YEARLY" to "Co rok")
+                val selectedOption = options.find { it.first == eventDetails.recurrence }?.second ?: "Jednorazowe"
 
                 ExposedDropdownMenuBox(
                     expanded = expanded,
@@ -397,7 +398,9 @@ fun AddEventBody(
                 ) {
                     TextField(
                         readOnly = true,
-                        value = selectedOption,
+                        // Pole zamknięte pokazuje "Powtarzalność: <wartość>" (dokładnie jak w
+                        // designzie) — lista rozwijana niżej pokazuje same wartości bez prefiksu.
+                        value = "Powtarzalność: $selectedOption",
                         onValueChange = { },
                         textStyle = LocalTextStyle.current.copy(fontSize = 15.sp),
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
