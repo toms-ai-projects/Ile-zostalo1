@@ -34,11 +34,16 @@ private val AppColorScheme =
     onSurfaceVariant = OnSurfaceVariant,
     // Tło dialogów (DatePickerDialog, TimePicker-owy AlertDialog) i rozwijanych list
     // (ExposedDropdownMenu) — bez tego wracały do ciemnoszarych domyślnych M3.
-    surfaceContainer = FormFieldBg,
+    // Wcześniej to było FormFieldBg (#F6EEE3) — dopóki BgLight było prawie białe
+    // (#FFF8F0), różnica była niezauważalna. Odkąd BgLight to wyraźniejszy beż
+    // (#EFE3D0), FormFieldBg zrobiło się od niego JAŚNIEJSZE, więc dialogi zaczęły
+    // rzucać się w oczy jako "stare, białawe" tło zamiast pasować do reszty appki —
+    // stąd te role śledzą teraz BgLight, nie FormFieldBg.
+    surfaceContainer = BgLight,
     surfaceContainerLow = BgLight,
     surfaceContainerLowest = BgLight,
-    surfaceContainerHigh = FormFieldBg,
-    surfaceContainerHighest = FormFieldBg,
+    surfaceContainerHigh = BgLight,
+    surfaceContainerHighest = BgLight,
     outline = OnSurfaceVariant,
     outlineVariant = FormFieldPlaceholder
   )

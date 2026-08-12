@@ -3,10 +3,14 @@ package com.example.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Wartości 1:1 z pliku designu "Ile Zostalo - Finalny design (cieply).dc.html"
-// (Claude Design) — nie przybliżenia, tylko dokładne kody hex ze źródła.
+// (Claude Design) — nie przybliżenia, tylko dokładne kody hex ze źródła, z jednym
+// świadomym odstępstwem: patrz komentarz przy BgLight.
 
-// Tło ekranów aplikacji (ciepły, kremowy odcień)
-val BgLight = Color(0xFFFFF8F0)
+// Tło ekranów aplikacji. Plik designu podaje tu #FFF8F0 dla samych ekranów, ale
+// odczucie "za jasno/sterylnie" na żywym telefonie (vs. pamięć designu) skłoniło do
+// świadomego przejścia na wyraźniej beżowy odcień — wybrany po porównaniu kilku
+// próbek na żywo z aplikacją.
+val BgLight = Color(0xFFEFE3D0)
 val TextLight = Color(0xFF2B241D)
 
 // Kolor akcentu głównego: FAB, przycisk "Zapisz", aktywne elementy segmentowanych
