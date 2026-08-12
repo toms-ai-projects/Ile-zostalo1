@@ -38,6 +38,7 @@ import com.example.ui.theme.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.input.ImeAction
@@ -710,7 +711,19 @@ fun AddEventBody(
             Button(
                 onClick = onSaveClick,
                 enabled = isEntryValid,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // Kolorowy "glow" pod przyciskiem z designu (box-shadow rgba(255,138,91,0.65))
+                    // — M3 Button nie ma parametru na kolor cienia, więc dokładamy go sami przez
+                    // Modifier.shadow z ambientColor/spotColor. Kolorowe cienie renderuje natywnie
+                    // dopiero Android 9+ (API 28); poniżej po prostu spadnie do zwykłego szarego
+                    // cienia — nieszkodliwa, łagodna degradacja na starszych telefonach (minSdk 24).
+                    .shadow(
+                        elevation = 18.dp,
+                        shape = RoundedCornerShape(50),
+                        ambientColor = com.example.ui.theme.AccentOrange.copy(alpha = 0.65f),
+                        spotColor = com.example.ui.theme.AccentOrange.copy(alpha = 0.65f)
+                    ),
                 // Pełna pigułka jak w designie (border-radius:100) — RoundedCornerShape(50)
                 // liczy promień jako % krótszego wymiaru, więc daje stadion, nie elipsę
                 // (to dałby CircleShape na szerokim, niskim przycisku).
