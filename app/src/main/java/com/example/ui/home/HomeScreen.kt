@@ -323,7 +323,14 @@ fun EventCard(
                             text = if (isPast) "$daysLeft dni temu" else "$daysLeft dni",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                fontFamily = fontFamily,
+                                // Zawsze Quicksand, NIE fontFamily karty (tak jak w pliku
+                                // designu — pigułka z dniami jest w Quicksand na każdej
+                                // karcie, nawet gdy tytuł używa np. Roboto Slab/Roboto
+                                // Mono). Inaczej ta sama liczba dni ("7 dni") wychodzi
+                                // różnej szerokości na różnych motywach, bo różne fonty
+                                // mają różne metryki znaków przy tym samym rozmiarze —
+                                // stąd pigułki "różnej wielkości" mimo identycznego tekstu.
+                                fontFamily = QuicksandFontFamily,
                                 fontSize = 17.sp
                             ),
                             color = pillTextColor,
