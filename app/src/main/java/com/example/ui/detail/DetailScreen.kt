@@ -345,15 +345,9 @@ fun DetailScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     val hasReminder = (event.reminderDays ?: 0) > 0 || (event.reminderHours ?: 0) > 0 || (event.reminderMinutes ?: 0) > 0
-                    val reminderText = if (hasReminder) {
-                        val parts = mutableListOf<String>()
-                        if ((event.reminderDays ?: 0) > 0) parts.add("${event.reminderDays} dni")
-                        if ((event.reminderHours ?: 0) > 0) parts.add("${event.reminderHours} godz.")
-                        if ((event.reminderMinutes ?: 0) > 0) parts.add("${event.reminderMinutes} min.")
-                        "${parts.joinToString(", ")} przed"
-                    } else {
-                        "Brak przypomnienia"
-                    }
+                    // Współdzielone z widgetami i Home (Event.reminderText()) — poprawna
+                    // gramatyka liczby pojedynczej ("1 dzień", nie "1 dni").
+                    val reminderText = event.reminderText()
                     
                     Row(
                         modifier = Modifier

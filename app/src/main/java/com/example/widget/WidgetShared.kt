@@ -89,19 +89,8 @@ fun buildBellIconBitmap(sizeDp: Int, colorArgb: Int): android.graphics.Bitmap {
 }
 
 /**
- * Tekst przypomnienia — ta sama logika co DetailScreen (dni/godz./min. przed), ale z
- * poprawną polską odmianą "1 dzień" / "N dni" (DetailScreen zawsze mówi "dni", nawet dla
- * 1 — nietknięte tu celowo, to osobna sprawa, nie część tego zadania).
+ * Tekst przypomnienia — teraz cienka nakładka nad [com.example.data.Event.reminderText],
+ * współdzieloną z DetailScreen i Home (dawniej trzy kopie tej samej logiki, w tym jedna
+ * z błędem gramatycznym na DetailScreen — ujednolicone).
  */
-fun buildReminderText(event: com.example.data.Event): String {
-    val days = event.reminderDays ?: 0
-    val hours = event.reminderHours ?: 0
-    val minutes = event.reminderMinutes ?: 0
-    val hasReminder = days > 0 || hours > 0 || minutes > 0
-    if (!hasReminder) return "Brak przypomnienia"
-    val parts = mutableListOf<String>()
-    if (days > 0) parts.add(if (days == 1) "1 dzień" else "$days dni")
-    if (hours > 0) parts.add("$hours godz.")
-    if (minutes > 0) parts.add("$minutes min.")
-    return "${parts.joinToString(", ")} przed"
-}
+fun buildReminderText(event: com.example.data.Event): String = event.reminderText()

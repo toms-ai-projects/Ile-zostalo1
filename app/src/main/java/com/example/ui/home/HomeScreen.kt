@@ -1,22 +1,26 @@
 package com.example.ui.home
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.ui.theme.*
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -101,7 +105,7 @@ fun HomeScreen(
             }
         }
     }
-    
+
     // Ticker to refresh time periodically
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -157,11 +161,11 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
-                    ) 
+                    )
                 },
                 actions = {
                     IconButton(
@@ -215,20 +219,48 @@ fun HomeScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(homeUiState.eventList) { event ->
-                    EventCard(
-                        event = event,
-                        currentTime = currentTime,
-                        onClick = { navigateToDetail(event.id) }
-                    )
+                homeUiState.featured?.let { featured ->
+                    item(key = "featured-${featured.id}") {
+                        FeaturedEventCard(
+                            event = featured,
+                            currentTime = currentTime,
+                            onClick = { navigateToDetail(featured.id) }
+                        )
+                    }
+                }
+                if (homeUiState.laterEvents.isNotEmpty()) {
+                    item(key = "later-label") {
+                        Text(
+                            text = "PÓŹNIEJ",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.5.sp
+                            ),
+                            color = TextLight.copy(alpha = 0.45f),
+                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                        )
+                    }
+                    item(key = "timeline") {
+                        TimelineSection(
+                            events = homeUiState.laterEvents,
+                            currentTime = currentTime,
+                            onClick = navigateToDetail
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * Karta "najbliższe" (wariant C designu Home) — pierścień postępu z lewej (ta sama
+ * krzywa Event.progressFraction() co dawny pasek/DetailScreen), nazwa/data/pigułka
+ * przypomnienia z prawej. Jedyna karta na Home z pierścieniem — reszta wydarzeń
+ * (TimelineEventRow) używa cieńszego paska, tak jak wcześniej EventCard.
+ */
 @Composable
-fun EventCard(
+fun FeaturedEventCard(
     event: Event,
     currentTime: Long,
     onClick: () -> Unit
@@ -240,40 +272,35 @@ fun EventCard(
     val daysLeft = TimeUnit.MILLISECONDS.toDays(absDiff)
     val progress = event.progressFraction(currentTime)
 
-    // Bez roku — design karty listy pokazuje "12 sierpnia, 18:00" (rok jest tylko w
-    // widoku szczegółów, gdzie miejsca jest więcej).
     val dateFormatter = remember { SimpleDateFormat("dd MMMM, HH:mm", Locale.getDefault()) }
     val dateString = dateFormatter.format(Date(nextTimestamp))
 
     val hasImage = event.imageUri.isNotBlank()
-    val themeConfig = com.example.ui.theme.EventThemes.getTheme(event.theme)
+    val themeConfig = EventThemes.getTheme(event.theme)
     val textColor = if (hasImage) Color.White else themeConfig.textColor
     val secondaryTextColor = if (hasImage) Color.White.copy(alpha = 0.8f) else themeConfig.secondaryTextColor
+    val labelColor = if (hasImage) Color.White.copy(alpha = 0.7f) else themeConfig.labelColor
     val backgroundColor = themeConfig.backgroundColor
     val fontFamily = themeConfig.fontFamily
     val titleFontWeight = themeConfig.titleFontWeight
-    val pillTextColor = if (hasImage) Color.White.copy(alpha = 0.85f) else themeConfig.textColor.copy(alpha = 0.6f)
-    val progressTrackColor = if (hasImage) Color.White.copy(alpha = 0.25f) else themeConfig.accentColor.copy(alpha = 0.15f)
-    val progressFillColor = if (hasImage) Color.White else themeConfig.accentColor
-    // Pigułka z liczbą dni miała ZAWSZE białe półprzezroczyste tło, ale tekst na niej
-    // jest jasny dla ciemnych kart (motyw "Nocny", zdjęcie w tle) — jasny na jasnym,
-    // nieczytelne. luminance() zamiast sprawdzania konkretnej nazwy motywu ("Night"),
-    // żeby to samo zadziałało poprawnie dla każdego przyszłego ciemnego motywu.
+    // Ten sam podział co pierścień na DetailScreen: dividerColor = tor, iconTint = wypełnienie.
+    val trackColor = if (hasImage) Color.White.copy(alpha = 0.3f) else themeConfig.dividerColor
+    val ringColor = if (hasImage) Color.White else themeConfig.iconTint
     val isDarkCard = hasImage || backgroundColor.luminance() < 0.5f
-    val pillBg = if (isDarkCard) Color.Black.copy(alpha = 0.28f) else Color.White.copy(alpha = 0.5f)
+    val pillBg = if (isDarkCard) Color.Black.copy(alpha = 0.28f) else Color.White.copy(alpha = 0.6f)
+
+    val hasReminder = (event.reminderDays ?: 0) > 0 || (event.reminderHours ?: 0) > 0 || (event.reminderMinutes ?: 0) > 0
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (themeConfig.hasDecorativeBorder && !hasImage) androidx.compose.ui.Modifier.border(2.dp, themeConfig.accentColor, RoundedCornerShape(32.dp))
-                else androidx.compose.ui.Modifier
+                if (themeConfig.hasDecorativeBorder && !hasImage) Modifier.border(2.dp, themeConfig.accentColor, RoundedCornerShape(32.dp))
+                else Modifier
             )
             .clickable { onClick() },
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        ),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box {
@@ -291,72 +318,297 @@ fun EventCard(
                     )
                 ))
             }
-            Column(
+            Row(
                 modifier = Modifier
                     .padding(20.dp)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Canvas(modifier = Modifier.size(108.dp)) {
+                        val strokeWidthPx = 9.dp.toPx()
+                        val diameterPx = 92.dp.toPx()
+                        val topLeft = Offset(
+                            (size.width - diameterPx) / 2f,
+                            (size.height - diameterPx) / 2f
+                        )
+                        val arcSize = androidx.compose.ui.geometry.Size(diameterPx, diameterPx)
+                        drawArc(
+                            color = trackColor,
+                            startAngle = -90f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round),
+                            topLeft = topLeft,
+                            size = arcSize
+                        )
+                        drawArc(
+                            color = ringColor,
+                            startAngle = -90f,
+                            sweepAngle = 360f * progress,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round),
+                            topLeft = topLeft,
+                            size = arcSize
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = daysLeft.toString(),
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = if (titleFontWeight == FontWeight.Normal) FontWeight.Medium else FontWeight.Black,
+                                fontSize = 30.sp,
+                                fontFamily = fontFamily
+                            ),
+                            color = textColor,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = if (isPast) "DNI TEMU" else "DNI",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                fontFamily = fontFamily
+                            ),
+                            color = labelColor,
+                            maxLines = 1
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(20.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "NAJBLIŻSZE",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp,
+                            fontFamily = fontFamily
+                        ),
+                        color = labelColor
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = event.name,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = titleFontWeight,
                             fontFamily = fontFamily,
-                            fontSize = 17.sp
+                            fontSize = 20.sp
                         ),
                         color = textColor,
                         maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .background(pillBg, RoundedCornerShape(100))
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = if (isPast) "$daysLeft dni temu" else "$daysLeft dni",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                // Zawsze Quicksand, NIE fontFamily karty (tak jak w pliku
-                                // designu — pigułka z dniami jest w Quicksand na każdej
-                                // karcie, nawet gdy tytuł używa np. Roboto Slab/Roboto
-                                // Mono). Inaczej ta sama liczba dni ("7 dni") wychodzi
-                                // różnej szerokości na różnych motywach, bo różne fonty
-                                // mają różne metryki znaków przy tym samym rozmiarze —
-                                // stąd pigułki "różnej wielkości" mimo identycznego tekstu.
-                                fontFamily = QuicksandFontFamily,
-                                fontSize = 17.sp
-                            ),
-                            color = pillTextColor,
-                            maxLines = 1
-                        )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = dateString,
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium, fontFamily = fontFamily),
+                        color = secondaryTextColor,
+                        maxLines = 1
+                    )
+                    // Pigułka przypomnienia — tylko gdy wydarzenie faktycznie je ma
+                    // (bez przypomnienia karta jest po prostu krótsza, bez pustego
+                    // elementu "Brak przypomnienia").
+                    if (hasReminder) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier
+                                .background(pillBg, RoundedCornerShape(100))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Notifications,
+                                contentDescription = "Przypomnienie",
+                                tint = textColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = event.reminderText(),
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium, fontFamily = fontFamily),
+                                color = textColor,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = dateString,
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium, fontFamily = fontFamily),
-                    color = secondaryTextColor
+            }
+        }
+    }
+}
+
+/**
+ * Oś czasu z pozostałymi wydarzeniami ("PÓŹNIEJ") — pionowa szyna z kolorową kropką
+ * per motyw wydarzenia i ciągłą linią. Linia jest rysowana per-wiersz na pełną
+ * wysokość wiersza (razem z marginesem karty), więc mimo wizualnego odstępu między
+ * kartami sama linia wygląda na nieprzerwaną przez całą kolumnę.
+ */
+@Composable
+fun TimelineSection(
+    events: List<Event>,
+    currentTime: Long,
+    onClick: (Int) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        events.forEach { event ->
+            TimelineEventRow(
+                event = event,
+                currentTime = currentTime,
+                onClick = { onClick(event.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimelineEventRow(
+    event: Event,
+    currentTime: Long,
+    onClick: () -> Unit
+) {
+    val nextTimestamp = event.getNextOccurrence(currentTime)
+    val diffMillis = nextTimestamp - currentTime
+    val isPast = diffMillis < 0
+    val absDiff = Math.abs(diffMillis)
+    val daysLeft = TimeUnit.MILLISECONDS.toDays(absDiff)
+    val progress = event.progressFraction(currentTime)
+
+    val dateFormatter = remember { SimpleDateFormat("d MMMM", Locale.getDefault()) }
+    val dateString = dateFormatter.format(Date(nextTimestamp))
+
+    val hasImage = event.imageUri.isNotBlank()
+    val themeConfig = EventThemes.getTheme(event.theme)
+    val textColor = if (hasImage) Color.White else themeConfig.textColor
+    val secondaryTextColor = if (hasImage) Color.White.copy(alpha = 0.8f) else themeConfig.secondaryTextColor
+    val backgroundColor = themeConfig.backgroundColor
+    val fontFamily = themeConfig.fontFamily
+    val titleFontWeight = themeConfig.titleFontWeight
+    val progressTrackColor = if (hasImage) Color.White.copy(alpha = 0.25f) else themeConfig.accentColor.copy(alpha = 0.15f)
+    val progressFillColor = if (hasImage) Color.White else themeConfig.accentColor
+    val dotColor = themeConfig.accentColor
+    // Linia szyny jest neutralna (nie zależy od motywu) — kolor "niesie" kropka.
+    val lineColor = TextLight.copy(alpha = 0.15f)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(28.dp)
+                .fillMaxHeight()
+        ) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val centerX = size.width / 2f
+                drawLine(
+                    color = lineColor,
+                    start = Offset(centerX, 0f),
+                    end = Offset(centerX, size.height),
+                    strokeWidth = 2.dp.toPx()
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(
+                drawCircle(
+                    color = dotColor,
+                    radius = 5.dp.toPx(),
+                    center = Offset(centerX, size.height / 2f)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Card(
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 6.dp)
+                .then(
+                    if (themeConfig.hasDecorativeBorder && !hasImage) Modifier.border(2.dp, themeConfig.accentColor, RoundedCornerShape(24.dp))
+                    else Modifier
+                )
+                .clickable { onClick() },
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = backgroundColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Box {
+                if (hasImage) {
+                    val imageModel = if (event.imageUri.startsWith("/")) java.io.File(event.imageUri) else event.imageUri
+                    coil.compose.AsyncImage(
+                        model = imageModel,
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                    Box(modifier = Modifier.matchParentSize().background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.7f))
+                        )
+                    ))
+                }
+                Column(
                     modifier = Modifier
+                        .padding(16.dp)
                         .fillMaxWidth()
-                        .height(6.dp)
-                        .background(progressTrackColor, RoundedCornerShape(100))
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = event.name,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = titleFontWeight,
+                                fontFamily = fontFamily,
+                                fontSize = 15.sp
+                            ),
+                            color = textColor,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = daysLeft.toString(),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = QuicksandFontFamily,
+                                    fontSize = 18.sp
+                                ),
+                                color = textColor,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = if (isPast) "DNI TEMU" else "DNI",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = QuicksandFontFamily,
+                                    fontSize = 10.sp
+                                ),
+                                color = secondaryTextColor,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = dateString,
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium, fontFamily = fontFamily),
+                        color = secondaryTextColor
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(fraction = progress)
-                            .fillMaxHeight()
-                            .background(progressFillColor, RoundedCornerShape(100))
-                    )
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .background(progressTrackColor, RoundedCornerShape(100))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = progress)
+                                .fillMaxHeight()
+                                .background(progressFillColor, RoundedCornerShape(100))
+                        )
+                    }
                 }
             }
         }

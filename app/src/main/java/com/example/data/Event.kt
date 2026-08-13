@@ -61,6 +61,24 @@ data class Event(
         return (PROGRESS_CURVE_K_DAYS / (PROGRESS_CURVE_K_DAYS + daysRemaining)).coerceIn(0f, 1f)
     }
 
+    /**
+     * Tekst pigułki przypomnienia ("2 dni, 3 godz. przed" / "Brak przypomnienia"),
+     * współdzielony przez DetailScreen, widgety i kartę "najbliższe" na Home — jedno
+     * źródło prawdy zamiast trzech kopii tej samej logiki. Poprawna gramatyka liczby
+     * pojedynczej ("1 dzień", nie "1 dni").
+     */
+    fun reminderText(): String {
+        val days = reminderDays ?: 0
+        val hours = reminderHours ?: 0
+        val minutes = reminderMinutes ?: 0
+        if (days <= 0 && hours <= 0 && minutes <= 0) return "Brak przypomnienia"
+        val parts = mutableListOf<String>()
+        if (days > 0) parts.add(if (days == 1) "1 dzień" else "$days dni")
+        if (hours > 0) parts.add("$hours godz.")
+        if (minutes > 0) parts.add("$minutes min.")
+        return "${parts.joinToString(", ")} przed"
+    }
+
     fun getNextOccurrence(currentTimeMillis: Long = System.currentTimeMillis()): Long {
         val recType = try {
             RecurrenceType.valueOf(recurrence)
