@@ -60,6 +60,39 @@
                 android:resource="@xml/glance_widget_info_panorama" />
         </receiver>
 
+        <receiver
+            android:name=".widget.CountdownGlanceWidgetBarReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glance_widget_info_bar" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.CountdownGlanceWidgetRingReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glance_widget_info_ring" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.CountdownGlanceWidgetListReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glance_widget_info_list" />
+        </receiver>
+
         <activity
             android:name=".widget.WidgetConfigActivity"
             android:exported="true"

@@ -86,17 +86,18 @@ class WidgetConfigActivity : ComponentActivity() {
             updateAppWidgetState(this@WidgetConfigActivity, glanceId) { prefs ->
                 prefs[SELECTED_EVENT_ID_KEY] = eventId
             }
-            // Ten sam ekran obsługuje obie odmiany widgetu — trzeba sprawdzić, do KTÓREGO
-            // providera należy ten appWidgetId, żeby odświeżyć właściwy (inaczej wybór
-            // zapisany dla Panoramy nigdy by się nie pokazał, bo update() poszedłby zawsze
-            // do krótkiego widgetu).
+            // Ten sam ekran obsługuje wszystkie odmiany widgetu — trzeba sprawdzić, do
+            // KTÓREGO providera należy ten appWidgetId, żeby odświeżyć właściwy (inaczej
+            // wybór zapisany dla Panoramy/Paska nigdy by się nie pokazał, bo update()
+            // poszedłby zawsze do krótkiego widgetu).
             val providerClassName = AppWidgetManager.getInstance(this@WidgetConfigActivity)
                 .getAppWidgetInfo(appWidgetId)?.provider?.className
             val widget: androidx.glance.appwidget.GlanceAppWidget =
-                if (providerClassName == CountdownGlanceWidgetPanoramaReceiver::class.java.name) {
-                    CountdownGlanceWidgetPanorama()
-                } else {
-                    CountdownGlanceWidget()
+                when (providerClassName) {
+                    CountdownGlanceWidgetPanoramaReceiver::class.java.name -> CountdownGlanceWidgetPanorama()
+                    CountdownGlanceWidgetBarReceiver::class.java.name -> CountdownGlanceWidgetBar()
+                    CountdownGlanceWidgetRingReceiver::class.java.name -> CountdownGlanceWidgetRing()
+                    else -> CountdownGlanceWidget()
                 }
             widget.update(this@WidgetConfigActivity, glanceId)
 
