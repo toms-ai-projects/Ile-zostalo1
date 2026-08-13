@@ -7,4 +7,6 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="ic_launcher_graphite">#FF2C2C2A</color>
+    <color name="ic_launcher_amber">#FFEF9F27</color>
 </resources>
