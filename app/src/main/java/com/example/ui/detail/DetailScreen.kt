@@ -159,16 +159,19 @@ fun DetailScreen(
                     ) {
                         Icon(Icons.Filled.Edit, contentDescription = "Edytuj")
                     }
-                    IconButton(onClick = {
-                        coroutineScope.launch {
-                            try {
-                                val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                                com.example.utils.shareBitmap(context, bitmap)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                try {
+                                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                    com.example.utils.shareBitmap(context, bitmap)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
                             }
-                        }
-                    }) {
+                        },
+                        modifier = Modifier.background(com.example.ui.theme.IconButtonBg, shape = androidx.compose.foundation.shape.CircleShape)
+                    ) {
                         Icon(Icons.Filled.Share, contentDescription = "Udostępnij obraz")
                     }
                     IconButton(onClick = { showExportDialog = true }, modifier = Modifier.background(com.example.ui.theme.IconButtonBg, shape = androidx.compose.foundation.shape.CircleShape)) {
