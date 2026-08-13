@@ -40,7 +40,8 @@
 
         <receiver
             android:name=".widget.CountdownGlanceWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_name_card">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -51,7 +52,8 @@
 
         <receiver
             android:name=".widget.CountdownGlanceWidgetPanoramaReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_name_panorama">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -62,7 +64,8 @@
 
         <receiver
             android:name=".widget.CountdownGlanceWidgetBarReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_name_bar">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -73,7 +76,8 @@
 
         <receiver
             android:name=".widget.CountdownGlanceWidgetRingReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_name_ring">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -84,7 +88,8 @@
 
         <receiver
             android:name=".widget.CountdownGlanceWidgetListReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_name_list">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -101,15 +106,10 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-        
-        <receiver
-            android:name=".widget.UserPresentReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.USER_PRESENT" />
-                <action android:name="android.intent.action.SCREEN_ON" />
-            </intent-filter>
-        </receiver>
+
+        <!-- UserPresentReceiver celowo NIE jest tu zadeklarowany — ACTION_USER_PRESENT/
+             ACTION_SCREEN_ON nie docierają do statycznych (manifestowych) odbiorników,
+             tylko do zarejestrowanych dynamicznie. Patrz CountdownApplication.kt. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

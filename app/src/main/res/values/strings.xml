@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Ile zostało</string>
+
+    <!-- Nazwy widgetów w systemowym oknie wyboru widgetu — bez tych etykiet
+         wszystkie pięć wariantów pokazywało się tam jako identyczne "Ile zostało",
+         nie do odróżnienia. -->
+    <string name="widget_name_card">Ile zostało — Karta</string>
+    <string name="widget_name_panorama">Ile zostało — Panorama</string>
+    <string name="widget_name_bar">Ile zostało — Pasek</string>
+    <string name="widget_name_ring">Ile zostało — Pierścień</string>
+    <string name="widget_name_list">Ile zostało — Lista</string>
+    <string name="widget_name_details">Ile zostało — Szczegóły</string>
 </resources>
