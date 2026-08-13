@@ -35,6 +35,7 @@ class UserPresentReceiver : BroadcastReceiver() {
                 CountdownGlanceWidgetBar().updateAll(context)
                 CountdownGlanceWidgetRing().updateAll(context)
                 CountdownGlanceWidgetList().updateAll(context)
+                CountdownGlanceWidgetDetails().updateAll(context)
             }
         }
     }

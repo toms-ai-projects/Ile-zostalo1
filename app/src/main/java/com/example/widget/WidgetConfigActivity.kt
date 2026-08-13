@@ -97,6 +97,7 @@ class WidgetConfigActivity : ComponentActivity() {
                     CountdownGlanceWidgetPanoramaReceiver::class.java.name -> CountdownGlanceWidgetPanorama()
                     CountdownGlanceWidgetBarReceiver::class.java.name -> CountdownGlanceWidgetBar()
                     CountdownGlanceWidgetRingReceiver::class.java.name -> CountdownGlanceWidgetRing()
+                    CountdownGlanceWidgetDetailsReceiver::class.java.name -> CountdownGlanceWidgetDetails()
                     else -> CountdownGlanceWidget()
                 }
             widget.update(this@WidgetConfigActivity, glanceId)
