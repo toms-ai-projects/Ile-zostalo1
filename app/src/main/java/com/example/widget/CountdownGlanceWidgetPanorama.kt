@@ -74,7 +74,7 @@ class CountdownGlanceWidgetPanorama : GlanceAppWidget() {
                     Text(
                         text = "Ładowanie...",
                         style = TextStyle(
-                            fontSize = 19.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Medium,
                             color = androidx.glance.unit.ColorProvider(Color(0xFF1D192B)),
                             textAlign = TextAlign.Center
@@ -98,7 +98,7 @@ class CountdownGlanceWidgetPanorama : GlanceAppWidget() {
                     Text(
                         text = "Dodaj pierwsze wydarzenie",
                         style = TextStyle(
-                            fontSize = 19.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Medium,
                             color = androidx.glance.unit.ColorProvider(Color(0xFF1D192B)),
                             textAlign = TextAlign.Center
@@ -173,7 +173,7 @@ class CountdownGlanceWidgetPanorama : GlanceAppWidget() {
                     Text(
                         text = activeEvent.name,
                         style = TextStyle(
-                            fontSize = 19.sp,
+                            fontSize = 23.sp,
                             fontWeight = FontWeight.Bold,
                             color = androidx.glance.unit.ColorProvider(textColor)
                         ),
@@ -183,7 +183,7 @@ class CountdownGlanceWidgetPanorama : GlanceAppWidget() {
                     Text(
                         text = dateString,
                         style = TextStyle(
-                            fontSize = 15.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
                             color = androidx.glance.unit.ColorProvider(secondaryTextColor)
                         ),
@@ -203,7 +203,7 @@ class CountdownGlanceWidgetPanorama : GlanceAppWidget() {
                             Text(
                                 text = "$daysLeft",
                                 style = TextStyle(
-                                    fontSize = 43.sp,
+                                    fontSize = 46.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = androidx.glance.unit.ColorProvider(textColor)
                                 ),
@@ -213,7 +213,7 @@ class CountdownGlanceWidgetPanorama : GlanceAppWidget() {
                             Text(
                                 text = if (isPast) "DNI TEMU" else "DNI",
                                 style = TextStyle(
-                                    fontSize = 16.sp,
+                                    fontSize = 19.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = androidx.glance.unit.ColorProvider(secondaryTextColor)
                                 ),
@@ -272,7 +272,7 @@ private fun TimeChip(value: String, label: String, bg: Color, valueColor: Color,
         Text(
             text = value,
             style = TextStyle(
-                fontSize = 19.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = androidx.glance.unit.ColorProvider(valueColor)
             ),
@@ -281,7 +281,7 @@ private fun TimeChip(value: String, label: String, bg: Color, valueColor: Color,
         Text(
             text = label,
             style = TextStyle(
-                fontSize = 11.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = androidx.glance.unit.ColorProvider(labelColor)
             ),
