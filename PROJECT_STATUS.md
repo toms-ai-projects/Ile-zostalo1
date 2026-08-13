@@ -11,7 +11,10 @@ Kotlin, Jetpack Compose, Room, Glance (widgety home-screen). Gradle 9.3.1 / JDK 
 - Aplikacja ma 6 wariantów widgetu home-screen (Karta, Panorama, Pasek, Pierścień,
   Lista, Szczegóły), każdy osobno wybieralny w systemowym pickerze widgetów.
 - Ikona aplikacji (launcher, adaptive icon + monochrome layer dla Android 13+) została
-  właśnie podmieniona na finalną, zatwierdzoną wersję — patrz `docs/last-iteration.md`.
+  podmieniona na finalną, zatwierdzoną wersję.
+- Ekran Home przeprojektowany na "wariant C": duża karta "najbliższe wydarzenie" z
+  pierścieniem postępu + oś czasu z resztą wydarzeń (zamiast dawnych 4 równych kart)
+  — patrz `docs/last-iteration.md`.
 - Build (`./gradlew assembleDebug`) zielony.
 
 ## Znane ograniczenia platformy (nie do naprawienia z poziomu kodu aplikacji)

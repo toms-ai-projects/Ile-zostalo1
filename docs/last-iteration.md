@@ -1,51 +1,42 @@
-# Ostatnia iteracja — podmiana ikony aplikacji (2026-08-13)
+# Ostatnia iteracja — Home: wariant C, oś czasu z wyróżnionym wydarzeniem (2026-08-13)
 
-Zadanie: wprowadzenie gotowych, zatwierdzonych zasobów ikony launchera z
-`ile-zostalo-icon.zip` do `app/src/main/res`, bez zmian w kodzie Kotlina i bez
-modyfikacji dostarczonych plików XML.
+Zadanie: przeprojektowanie ekranu Home z układu czterech równorzędnych kart na
+hierarchię "najbliższe wydarzenie + oś czasu z resztą", wg makiety wklejonej przez
+użytkownika ("Home — wariant C").
 
-## Usunięte pliki (jedyna nieodwracalna część tej iteracji)
-Stare zasoby ikony wygenerowane przez szablon Android Studio, usunięte przed
-skopiowaniem nowych:
-- `mipmap-anydpi-v26/ic_launcher.xml`
-- `mipmap-anydpi-v26/ic_launcher_round.xml`
-- `mipmap-hdpi/ic_launcher.webp`, `mipmap-hdpi/ic_launcher_round.webp`
-- `mipmap-mdpi/ic_launcher.webp`, `mipmap-mdpi/ic_launcher_round.webp`
-- `mipmap-xhdpi/ic_launcher.webp`, `mipmap-xhdpi/ic_launcher_round.webp`
-- `mipmap-xxhdpi/ic_launcher.webp`, `mipmap-xxhdpi/ic_launcher_round.webp`
-- `mipmap-xxxhdpi/ic_launcher.webp`, `mipmap-xxxhdpi/ic_launcher_round.webp`
-- `drawable/ic_launcher_background.xml`
-- `drawable/ic_launcher_foreground.xml`
-
-(Odzyskiwalne z historii gita, jeśli kiedykolwiek potrzebne — usunięcie dotyczy
-tylko plików roboczych, nie commitów.)
+## Ustalenia poprzedzające implementację (przez AskUserQuestion)
+- **Zakres:** wariant C **zastępuje** dotychczasowy Home całkowicie (nie eksperyment obok).
+- **Przeterminowane wydarzenia:** zachowanie **bez zmian** względem starego Home — brak
+  dodatkowego filtrowania, mogą zostać "najbliższe" albo trafić na oś z "X dni temu".
+- **Pigułka przypomnienia na karcie "najbliższe":** **ukryta**, gdy wydarzenie nie ma
+  ustawionego przypomnienia (nie pokazujemy "Brak przypomnienia" jak na DetailScreen).
+- **Gramatyka tekstu przypomnienia:** naprawiona **wszędzie** (Home + DetailScreen +
+  widgety), nie tylko na nowym Home.
 
 ## Dodane / zmienione pliki
-- `drawable/ic_launcher_background.xml`, `drawable/ic_launcher_foreground.xml` —
-  nowe warstwy vector (zastępują usunięte, ta sama nazwa).
-- `drawable/ic_launcher_monochrome.xml` — nowa warstwa monochrome (Android 13+
-  themed icons), poprzednio nie istniała osobno.
-- `mipmap-anydpi-v26/ic_launcher.xml`, `ic_launcher_round.xml` — nowa definicja
-  adaptive icon, referencjonuje `@drawable/ic_launcher_monochrome`.
-- `mipmap-{h,m,xh,xxh,xxxh}dpi/ic_launcher.png`, `ic_launcher_round.png` — nowe PNG
-  (format zmieniony z `.webp` na `.png` — tak dostarczył zestaw ikon; brak `.webp` w
-  `mipmap-*dpi` był jednym z kryteriów akceptacji).
-- `values/colors.xml` — dodano `ic_launcher_graphite` (`#FF2C2C2A`) i
-  `ic_launcher_amber` (`#FFEF9F27`), scalone z dostarczonego `ic_launcher_colors.xml`
-  (ten plik następnie usunięty, bo `colors.xml` już istniał w projekcie).
+- `data/Event.kt` — nowa `Event.reminderText()`, jedno źródło prawdy dla tekstu
+  pigułki przypomnienia (dawniej trzy kopie tej samej logiki: DetailScreen miała błąd
+  gramatyczny "1 dni", widgety miały już poprawkę "1 dzień").
+- `ui/detail/DetailScreen.kt` — używa teraz `event.reminderText()` zamiast własnej,
+  wadliwej logiki inline.
+- `widget/WidgetShared.kt` — `buildReminderText()` to teraz cienka nakładka nad
+  `Event.reminderText()` (zero zmian w zachowaniu widgetów, tylko deduplikacja).
+- `ui/home/HomeViewModel.kt` — `HomeUiState` rozbity na `featured: Event?` +
+  `laterEvents: List<Event>`, ta sama kolejność sortowania co dawniej (bez filtrowania).
+- `ui/home/HomeScreen.kt` — przepisany: `FeaturedEventCard` (pierścień postępu
+  Canvas/`drawArc`, nazwa/data, opcjonalna pigułka przypomnienia) + `TimelineSection`/
+  `TimelineEventRow` (pionowa oś z ciągłą linią i kropką w `accentColor` motywu
+  wydarzenia). Stary `EventCard` (4 równe bloki) usunięty — nic innego go nie używało.
 
-## Pominięte celowo
-- `store/play_store_icon_512.png` (z ZIP-a) i osobno wskazany przez użytkownika
-  `C:\Users\Admin\Downloads\play_store_icon_512.png` — materiał na listing Google
-  Play, poza zakresem repozytorium zgodnie z treścią zadania.
-- `AndroidManifest.xml` — `android:icon`/`android:roundIcon` już wskazywały na
-  `@mipmap/ic_launcher{,_round}`, więc nie wymagał zmian.
+## Weryfikacja na urządzeniu
+Zainstalowane przez `adb`/`gradlew installDebug`, sprawdzone zrzutami ekranu: górna i
+dolna część listy Home (7 testowych wydarzeń, różne motywy — kropki i tła kart
+poprawnie kolorowane), nawigacja z karty "najbliższe" do Detail, poprawiona gramatyka
+pigułki na Detail ("1 dzień przed" zamiast dawnego "1 dni przed").
 
 ## Wynik builda
-`./gradlew assembleDebug` — **BUILD SUCCESSFUL**, brak ostrzeżeń o duplikacie
-zasobów.
+`./gradlew assembleDebug` / `compileDebugKotlin` — **BUILD SUCCESSFUL**.
 
-## Odstępstwa od specyfikacji zadania
-- `PROJECT_STATUS.md`, `docs/last-iteration.md`, `docs/next-iteration.md` nie
-  istniały wcześniej w repo (stan sesji był dotąd śledzony wyłącznie w pamięci
-  roboczej Claude, poza repo) — utworzone od zera tą iteracją.
+## Brak nieodwracalnych operacji
+Ta iteracja to wyłącznie zmiany w kodzie Kotlina (żadnych usuniętych zasobów binarnych
+jak przy poprzedniej iteracji — ikona launchera).

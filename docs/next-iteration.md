@@ -1,12 +1,14 @@
 # Następna iteracja
 
-Nic konkretnego nie jest zaplanowane — poprzednia iteracja (podmiana ikony
-launchera) zakończyła się kompletnie, zgodnie z kryteriami akceptacji.
+Nic konkretnego nie jest zaplanowane — poprzednia iteracja (Home: wariant C) zakończyła
+się kompletnie, zweryfikowana na urządzeniu.
 
 Możliwe kierunki na przyszłość (niepotwierdzone przez użytkownika, tylko notatka):
-- Zweryfikować na urządzeniu, że nowa ikona poprawnie renderuje się jako themed
-  icon (Material You, monochrome layer) po zmianie motywu systemowego na Android
-  13+/14/15.
-- Rozważyć podmianę `previewImage` widgetów (`drawable-nodpi/widget_preview_*.png`)
-  jeśli nowa ikona aplikacji ma się pojawiać w tle/kontekście tych zrzutów — obecnie
-  nieporuszane, bo dotyczy zasobów widgetu, nie ikony launchera.
+- Ewentualny dalszy szlif wizualny nowego Home (rozmiar pierścienia, odstępy) — jeśli
+  po dłuższym patrzeniu na żywo coś będzie przeszkadzać.
+- `previewImage` widgetów wciąż odzwierciedla stary układ Home (4 karty) — jeśli komuś
+  zależy na spójności, warto odświeżyć zrzuty ekranu użyte jako podgląd w systemowym
+  pickerze widgetów, teraz gdy Home wygląda inaczej (widgety same w sobie się nie
+  zmieniły, tylko Home).
+- Nadal nieporuszane z poprzedniej notatki: ewentualna podmiana `previewImage`
+  widgetów pod kątem nowej ikony aplikacji.
